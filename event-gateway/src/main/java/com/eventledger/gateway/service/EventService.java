@@ -89,9 +89,9 @@ public class EventService {
             event.setErrorMessage(e.getMessage());
             eventRepository.save(event);
             eventFailureCounter.increment();
-            log.error("Event {} failed to process: {}", request.eventId(), e.getMessage());
+            log.error("Event {} failed to process", request.eventId(), e);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                "Account Service unavailable: " + e.getMessage());
+                "Account Service is temporarily unavailable. Please retry later.");
         }
     }
 

@@ -6,7 +6,7 @@
 
 **Architecture:** Event Gateway (public-facing) receives transaction events, validates, enforces idempotency, and forwards to Account Service (internal). Both services run independently with H2 in-memory databases. OpenTelemetry traces propagate across the Gateway → Account call. Resilience4j circuit breaker protects the Gateway's downstream call.
 
-**Tech Stack:** Java 26, Spring Boot 3.x, H2, Resilience4j, OpenTelemetry, Maven, JUnit 5, Docker Compose, Logback JSON, Virtual Threads
+**Tech Stack:** Java 26, Spring Boot 4.1.0 (Spring Framework 7.0.x), H2, Resilience4j 2.4.0, OpenTelemetry 1.62, Micrometer 1.17, Maven, JUnit 5, Docker Compose, Logstash-logback-encoder 9.0, Virtual Threads, Jackson 3.x
 
 ## Global Constraints
 
