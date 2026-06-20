@@ -35,16 +35,19 @@ Both services use H2 in-memory databases (no shared state) and communicate via s
 
 ## Quick Start
 
-### Docker Compose
+### Docker Compose (preferred)
 
 ```bash
-# Build and start both services
+# Build images and start both services
+# Use 'docker compose' (v2) or 'docker-compose' (v1) depending on your setup
 docker compose up --build
 
 # Verify health
 curl http://localhost:8081/health
 curl http://localhost:8082/health
 ```
+
+For Jaeger tracing visualization, Docker Compose includes an optional Jaeger service.
 
 ### Manual (Terminals)
 
@@ -53,10 +56,20 @@ curl http://localhost:8082/health
 mvn clean package -DskipTests
 
 # Terminal 1: Start Account Service
-java --enable-preview -jar account-service/target/*.jar
+java --enable-preview -jar account-service/target/account-service-1.0.0.jar
 
 # Terminal 2: Start Event Gateway
-java --enable-preview -jar event-gateway/target/*.jar
+java --enable-preview -jar event-gateway/target/event-gateway-1.0.0.jar
+```
+
+### Manual with Maven (no build step needed)
+
+```bash
+# Terminal 1: Start Account Service
+mvn spring-boot:run -pl account-service
+
+# Terminal 2: Start Event Gateway
+mvn spring-boot:run -pl event-gateway
 ```
 
 ## API Usage
@@ -94,7 +107,7 @@ The response contains the transaction result from the Account Service:
 }
 ```
 
-Submitting the same `eventId` again is idempotent — the original event is returned with HTTP 200 (instead of 201).
+Submitting the same `eventId` again is idempotent — returns HTTP 200 with event summary (instead of 201 for new events):
 
 ### Get Event by ID
 
@@ -156,12 +169,13 @@ curl http://localhost:8082/health
 ## Running Tests
 
 ```bash
-# Run all tests
-mvn test
+# Run all unit tests
+mvn test -pl account-service,event-gateway -am
 
-# Run tests with JaCoCo coverage report
-mvn verify
-# Coverage report: target/site/jacoco/index.html
+# Run unit + integration tests with JaCoCo coverage report
+mvn verify -pl event-gateway -am
+# Unit coverage: event-gateway/target/site/jacoco/index.html
+# Account svc coverage: account-service/target/site/jacoco/index.html
 ```
 
 ## Resiliency Patterns
@@ -203,7 +217,24 @@ This ensures that **read operations never depend on the Account Service** — th
 
 ## Distributed Tracing
 
-Each request generates a trace ID propagated via the `trace-id` HTTP header. Both services log structured JSON with the trace ID, enabling end-to-end request tracing. OpenTelemetry is configured with a logging span exporter, easily extensible to OTLP for Jaeger or Zipkin.
+Each request generates a trace ID propagated via the `trace-id` HTTP header. Both services log structured JSON with the trace ID, enabling end-to-end request tracing.
+
+### Jaeger Visualization (Optional)
+
+Docker Compose includes a Jaeger container for trace visualization:
+
+```bash
+docker compose up -d
+# Access Jaeger UI at http://localhost:16686
+```
+
+Activate the `jaeger` Spring profile on both services to send traces to Jaeger:
+
+```bash
+# When running manually, add the profile:
+SPRING_PROFILES_ACTIVE=jaeger mvn spring-boot:run -pl account-service
+SPRING_PROFILES_ACTIVE=jaeger mvn spring-boot:run -pl event-gateway
+```
 
 ## Prometheus Metrics
 
