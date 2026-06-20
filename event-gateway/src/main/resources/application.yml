@@ -59,7 +59,7 @@ resilience4j:
         base-config: default
   ratelimiter:
     instances:
-      eventSubmission:
+      accountService:
         limit-for-period: 100
         limit-refresh-period: 1s
         timeout-duration: 100ms

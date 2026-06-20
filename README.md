@@ -20,8 +20,9 @@ Both services use H2 in-memory databases (no shared state) and communicate via s
 - Jackson 3.x (`tools.jackson.*`)
 - H2 In-Memory Database
 - JPA / Hibernate
-- Resilience4j 2.4.0 Circuit Breaker
-- OpenTelemetry SDK 1.62
+- Resilience4j 2.4.0 (Circuit Breaker + Retry + Rate Limiter)
+- OpenTelemetry 1.62
+- Prometheus Metrics
 - JSON Structured Logging (Logstash)
 - Maven Multi-Module Build
 - Docker Compose
@@ -163,17 +164,29 @@ mvn verify
 # Coverage report: target/site/jacoco/index.html
 ```
 
-## Resiliency Pattern: Circuit Breaker
+## Resiliency Patterns
 
-The Event Gateway uses a **Resilience4j Circuit Breaker** when calling the Account Service. This prevents cascading failures when the downstream service is unavailable.
+The Event Gateway uses three complementary resiliency patterns when calling the Account Service, composed as a decorator chain: **Circuit Breaker → Retry → RateLimiter**.
 
-### Configuration
-
+### Circuit Breaker
+Prevents cascading failures when the downstream service is unavailable.
 - **Sliding window**: Count-based, last 10 calls
 - **Minimum calls**: 5 before evaluating state
 - **Failure threshold**: 50% failure rate trips the breaker
 - **Open state duration**: 10 seconds (wait before probing recovery)
 - **Half-open calls**: 3 test calls permitted to verify recovery
+
+### Retry with Exponential Backoff + Jitter
+Handles transient failures by retrying with increasing delays.
+- **Max attempts**: 3
+- **Initial wait**: 500ms, doubling each attempt
+- **Backoff**: Multiplier 2× (500ms → 1s → 2s)
+- **Jitter**: ±50% randomization to prevent thundering herd
+
+### Rate Limiting
+Protects the Account Service from request spikes.
+- **Limit**: 100 requests per second
+- **Timeout**: 100ms if capacity is exceeded
 
 ### Graceful Degradation
 
@@ -191,6 +204,21 @@ This ensures that **read operations never depend on the Account Service** — th
 ## Distributed Tracing
 
 Each request generates a trace ID propagated via the `trace-id` HTTP header. Both services log structured JSON with the trace ID, enabling end-to-end request tracing. OpenTelemetry is configured with a logging span exporter, easily extensible to OTLP for Jaeger or Zipkin.
+
+## Prometheus Metrics
+
+Both services expose Prometheus metrics at the Actuator endpoint:
+```bash
+curl http://localhost:8081/actuator/prometheus
+curl http://localhost:8082/actuator/prometheus
+```
+
+Custom metrics include:
+- `gateway.events.submitted` — total events received
+- `gateway.events.success` — events processed successfully
+- `gateway.events.failure` — events that failed
+
+Standard JVM, system, and Hikari connection pool metrics are also available.
 
 ## Design Document
 
