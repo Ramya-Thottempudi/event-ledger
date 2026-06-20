@@ -1,0 +1,31 @@
+server:
+  port: 8082
+  tomcat:
+    threads:
+      max: 4  # Minimal for in-memory, virtual threads handle concurrency
+
+spring:
+  application:
+    name: account-service
+  datasource:
+    url: jdbc:h2:mem:accounts;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.eventledger: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
