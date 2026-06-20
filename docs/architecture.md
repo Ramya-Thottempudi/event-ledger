@@ -123,11 +123,11 @@ sequenceDiagram
 ```mermaid
 stateDiagram-v2
     [*] --> CLOSED
-    CLOSED --> OPEN: Failure rate > 50%<br/>(in 10-call window)
+    CLOSED --> OPEN: Failure rate > 50 pct (10-call window)
     OPEN --> HALF_OPEN: After 10s wait
-    HALF_OPEN --> CLOSED: 3/3 probes succeed
+    HALF_OPEN --> CLOSED: 3 of 3 probes succeed
     HALF_OPEN --> OPEN: Any probe fails
-    CLOSED --> CLOSED: Normal operation<br/>(requests forwarded)
+    CLOSED --> CLOSED: Normal operation (requests forwarded)
 ```
 
 **State transitions explained:**
@@ -139,22 +139,30 @@ stateDiagram-v2
 ## Graceful Degradation Flowchart
 
 ```mermaid
-flowchart TD
-    A[Client Request] --> B{Endpoint type?}
+graph TD
+    A[Client Request]
+    B{Endpoint type?}
+    C{Circuit Breaker state?}
+    D[Query Gateway local DB]
+    E[Return aggregated status]
+    F[Forward to Account Service]
+    G[Return 503 with error body]
+    H[Return 201 Created]
+    I[Mark event FAILED in DB]
+    J[Return events from local DB]
+    K[Include account status in health]
 
-    B -->|POST /events| C{Circuit Breaker state?}
-    B -->|GET /events/{id}| D[Query Gateway local DB]
-    B -->|GET /events?account=| D
-    B -->|GET /health| E[Return aggregated status]
-
-    C -->|CLOSED| F[Forward to Account Service]
-    C -->|OPEN| G[Return 503 with error body]
-
-    F -->|Success| H[Return 201 Created<br/>with TransactionResponse]
-    F -->|Failure| I[Mark event FAILED in DB<br/>Return 503 with error body]
-
-    D --> J[Return events from gateway local DB]
-    E --> K[Include account-service status<br/>in health response]
+    A --> B
+    B -- "POST /events" --> C
+    B -- "GET /events/{id}" --> D
+    B -- "GET /events?account=" --> D
+    B -- "GET /health" --> E
+    C -- "CLOSED" --> F
+    C -- "OPEN" --> G
+    F -- "Success" --> H
+    F -- "Failure" --> I
+    D --> J
+    E --> K
 ```
 
 **Design principles illustrated:**
