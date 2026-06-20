@@ -4,6 +4,8 @@ import com.eventledger.gateway.client.AccountServiceClient;
 import com.eventledger.gateway.entity.EventRecord;
 import com.eventledger.gateway.repository.EventRepository;
 import com.eventledger.shared.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -24,13 +26,20 @@ public class EventService {
     private final EventRepository eventRepository;
     private final AccountServiceClient accountServiceClient;
     private final ObjectMapper objectMapper;
+    private final Counter eventSubmissionCounter;
+    private final Counter eventSuccessCounter;
+    private final Counter eventFailureCounter;
 
     public EventService(EventRepository eventRepository,
                         AccountServiceClient accountServiceClient,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        MeterRegistry meterRegistry) {
         this.eventRepository = eventRepository;
         this.accountServiceClient = accountServiceClient;
         this.objectMapper = objectMapper;
+        this.eventSubmissionCounter = meterRegistry.counter("gateway.events.submitted");
+        this.eventSuccessCounter = meterRegistry.counter("gateway.events.success");
+        this.eventFailureCounter = meterRegistry.counter("gateway.events.failure");
     }
 
     @Transactional
@@ -65,18 +74,21 @@ public class EventService {
             }
         }
         eventRepository.save(event);
+        eventSubmissionCounter.increment();
 
         // Forward to Account Service
         try {
             TransactionResponse accountResponse = accountServiceClient.applyTransaction(request, traceId);
             event.setStatus("PROCESSED");
             eventRepository.save(event);
+            eventSuccessCounter.increment();
             log.info("Event {} processed successfully", request.eventId());
             return accountResponse;
         } catch (Exception e) {
             event.setStatus("FAILED");
             event.setErrorMessage(e.getMessage());
             eventRepository.save(event);
+            eventFailureCounter.increment();
             log.error("Event {} failed to process: {}", request.eventId(), e.getMessage());
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                 "Account Service unavailable: " + e.getMessage());
