@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   account-service:
     build:
@@ -9,12 +7,12 @@ services:
       - "8082:8082"
     environment:
       - SERVER_PORT=8082
-      - JAVA_OPTS=--enable-preview
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health 2>/dev/null | grep -q UP || exit 1"]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   event-gateway:
     build:
@@ -30,10 +28,11 @@ services:
       account-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health 2>/dev/null | grep -q UP || exit 1"]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   jaeger:
     image: jaegertracing/all-in-one:latest
