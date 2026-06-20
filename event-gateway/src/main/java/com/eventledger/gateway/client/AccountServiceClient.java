@@ -11,7 +11,6 @@ import io.github.resilience4j.retry.RetryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -26,14 +25,12 @@ public class AccountServiceClient {
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
     private final RateLimiter rateLimiter;
-    private final String accountServiceBaseUrl;
 
     public AccountServiceClient(RestClient.Builder restClientBuilder,
                                 CircuitBreakerRegistry circuitBreakerRegistry,
                                 RetryRegistry retryRegistry,
                                 RateLimiterRegistry rateLimiterRegistry,
                                 @Value("${account-service.url}") String accountServiceUrl) {
-        this.accountServiceBaseUrl = accountServiceUrl;
         this.restClient = restClientBuilder.baseUrl(accountServiceUrl).build();
         this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("accountService");
         this.retry = retryRegistry.retry("accountService");
