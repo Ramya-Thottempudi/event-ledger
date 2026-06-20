@@ -32,3 +32,13 @@ management:
     web:
       exposure:
         include: health,metrics
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    metrics:
+      export:
+        enabled: false
+    tracing:
+      export:
+        enabled: false
