@@ -16,6 +16,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -28,7 +29,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics
+        include: health,metrics,prometheus
   tracing:
     sampling:
       probability: 1.0

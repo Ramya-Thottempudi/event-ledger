@@ -16,6 +16,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -31,7 +32,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics
+        include: health,metrics,prometheus
   tracing:
     sampling:
       probability: 1.0
@@ -42,3 +43,23 @@ management:
     tracing:
       export:
         enabled: false
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        exponential-backoff-multiplier: 2
+        enable-exponential-backoff: true
+        enable-randomized-wait: true
+        randomized-wait-multiplier: 0.5
+    instances:
+      accountService:
+        base-config: default
+  ratelimiter:
+    instances:
+      eventSubmission:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 100ms
