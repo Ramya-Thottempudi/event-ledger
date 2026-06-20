@@ -94,11 +94,11 @@ class EventControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated());
 
-        // Simulate duplicate - eventService.getEvent returns existing event
+        // Simulate duplicate - eventService.getEventSafe returns existing event
         EventRecord existing = new EventRecord();
         existing.setEventId("evt-001");
         existing.setStatus("PROCESSED");
-        when(eventService.getEvent("evt-001")).thenReturn(existing);
+        when(eventService.getEventSafe("evt-001")).thenReturn(existing);
 
         mockMvc.perform(post("/events")
                 .contentType(MediaType.APPLICATION_JSON)

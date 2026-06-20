@@ -34,7 +34,14 @@ public class EventController {
             MDC.put("trace-id", traceId);
         }
 
-        // Check if account service is available first (circuit breaker check)
+        // Check for duplicate before processing — return original event if exists
+        EventRecord existing = eventService.getEventSafe(request.eventId());
+        if (existing != null) {
+            log.info("Duplicate event received: {} (status: {}), returning original", request.eventId(), existing.getStatus());
+            return ResponseEntity.ok(existing);
+        }
+
+        // Check circuit breaker before forwarding to Account Service
         if (!eventService.isAccountServiceAvailable()) {
             log.warn("Account Service is unavailable (circuit breaker open), rejecting event");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -47,12 +54,7 @@ public class EventController {
 
         try {
             TransactionResponse response = eventService.submitEvent(request, traceId);
-            boolean isDuplicate = request.eventId() != null &&
-                eventService.getEvent(request.eventId()) != null;
-
-            return isDuplicate
-                ? ResponseEntity.status(HttpStatus.OK).body(response)
-                : ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             log.error("Failed to process event {}: {}", request.eventId(), e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

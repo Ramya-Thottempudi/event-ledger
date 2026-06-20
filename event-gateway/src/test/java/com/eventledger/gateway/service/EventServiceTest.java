@@ -46,7 +46,6 @@ class EventServiceTest {
 
     @Test
     void shouldSubmitEventAndReturnSuccess() {
-        when(eventRepository.findById(anyString())).thenReturn(Optional.empty());
         when(accountServiceClient.applyTransaction(any(), anyString()))
             .thenReturn(TransactionResponse.success("evt-001", "acct-123", BigDecimal.valueOf(150), "USD"));
         when(eventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -63,27 +62,30 @@ class EventServiceTest {
     }
 
     @Test
-    void shouldReturnDuplicateForExistingEvent() {
+    void shouldReturnExistingEventViaGetEventSafe() {
         EventRecord existing = new EventRecord();
         existing.setEventId("evt-001");
         existing.setStatus("PROCESSED");
         when(eventRepository.findById("evt-001")).thenReturn(Optional.of(existing));
 
-        TransactionRequest request = new TransactionRequest(
-            "evt-001", "acct-123", EventType.CREDIT,
-            BigDecimal.valueOf(150), "USD", Instant.now(), null);
+        EventRecord found = eventService.getEventSafe("evt-001");
 
-        TransactionResponse response = eventService.submitEvent(request, "trace-123");
+        assertNotNull(found);
+        assertEquals("evt-001", found.getEventId());
+        assertEquals("PROCESSED", found.getStatus());
+    }
 
-        assertNotNull(response);
-        assertEquals("SUCCESS", response.status());
-        verify(accountServiceClient, never()).applyTransaction(any(), anyString());
-        verify(eventRepository, never()).save(any());
+    @Test
+    void shouldReturnNullForNonExistentEventSafe() {
+        when(eventRepository.findById("evt-999")).thenReturn(Optional.empty());
+
+        EventRecord found = eventService.getEventSafe("evt-999");
+
+        assertNull(found);
     }
 
     @Test
     void shouldFailWhenAccountServiceUnavailable() {
-        when(eventRepository.findById(anyString())).thenReturn(Optional.empty());
         when(accountServiceClient.applyTransaction(any(), anyString()))
             .thenThrow(new RuntimeException("Connection refused"));
         when(eventRepository.save(any())).thenAnswer(i -> i.getArgument(0));
