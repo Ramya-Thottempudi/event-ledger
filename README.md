@@ -65,6 +65,9 @@ java --enable-preview -jar event-gateway/target/event-gateway-1.0.0.jar
 ### Manual with Maven (no build step needed)
 
 ```bash
+# Install shared dependency first (one-time)
+mvn install -pl shared-models -DskipTests
+
 # Terminal 1: Start Account Service
 mvn spring-boot:run -pl account-service
 
@@ -107,7 +110,16 @@ The response contains the transaction result from the Account Service:
 }
 ```
 
-Submitting the same `eventId` again is idempotent — returns HTTP 200 with event summary (instead of 201 for new events):
+Submitting the same `eventId` again is idempotent — returns HTTP 200 with event summary (instead of 201):
+
+```json
+{
+  "eventId": "evt-001",
+  "accountId": "acct-123",
+  "status": "PROCESSED",
+  "message": "Duplicate event"
+}
+```
 
 ### Get Event by ID
 
