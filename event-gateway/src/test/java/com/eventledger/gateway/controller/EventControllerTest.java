@@ -47,6 +47,7 @@ class EventControllerTest {
             "evt-001", "acct-123", EventType.CREDIT,
             BigDecimal.valueOf(150.00), "USD", Instant.parse("2026-05-15T14:02:11Z"), null);
 
+        when(eventService.getEventSafe(anyString())).thenReturn(null);
         when(eventService.isAccountServiceAvailable()).thenReturn(true);
         when(eventService.submitEvent(any(), anyString()))
             .thenReturn(TransactionResponse.success("evt-001", "acct-123", BigDecimal.valueOf(150.00), "USD"));
@@ -84,6 +85,13 @@ class EventControllerTest {
             "evt-001", "acct-123", EventType.CREDIT,
             BigDecimal.valueOf(150.00), "USD", Instant.parse("2026-05-15T14:02:11Z"), null);
 
+        // 1st call to getEventSafe returns null → proceeds, 2nd returns existing → duplicate
+        EventRecord existing = new EventRecord();
+        existing.setEventId("evt-001");
+        existing.setAccountId("acct-123");
+        existing.setStatus("PROCESSED");
+        when(eventService.getEventSafe("evt-001")).thenReturn(null, existing);
+
         when(eventService.isAccountServiceAvailable()).thenReturn(true);
         when(eventService.submitEvent(any(), anyString()))
             .thenReturn(TransactionResponse.success("evt-001", "acct-123", BigDecimal.valueOf(150.00), "USD"));
@@ -94,16 +102,13 @@ class EventControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated());
 
-        // Simulate duplicate - eventService.getEventSafe returns existing event
-        EventRecord existing = new EventRecord();
-        existing.setEventId("evt-001");
-        existing.setStatus("PROCESSED");
-        when(eventService.getEventSafe("evt-001")).thenReturn(existing);
-
+        // Second call - duplicate detected, returns 200 with event info
         mockMvc.perform(post("/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("PROCESSED"))
+            .andExpect(jsonPath("$.eventId").value("evt-001"));
     }
 
     @Test

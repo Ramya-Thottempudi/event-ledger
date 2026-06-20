@@ -34,11 +34,16 @@ public class EventController {
             MDC.put("trace-id", traceId);
         }
 
-        // Check for duplicate before processing — return original event if exists
+        // Check for duplicate before processing
         EventRecord existing = eventService.getEventSafe(request.eventId());
         if (existing != null) {
-            log.info("Duplicate event received: {} (status: {}), returning original", request.eventId(), existing.getStatus());
-            return ResponseEntity.ok(existing);
+            log.info("Duplicate event: {} (status: {})", request.eventId(), existing.getStatus());
+            return ResponseEntity.ok(Map.of(
+                "eventId", existing.getEventId() != null ? existing.getEventId() : request.eventId(),
+                "accountId", existing.getAccountId() != null ? existing.getAccountId() : request.accountId(),
+                "status", existing.getStatus() != null ? existing.getStatus() : "UNKNOWN",
+                "message", "Duplicate event"
+            ));
         }
 
         // Check circuit breaker before forwarding to Account Service

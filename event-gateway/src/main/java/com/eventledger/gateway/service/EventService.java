@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,14 @@ public class EventService {
 
     @Transactional
     public TransactionResponse submitEvent(TransactionRequest request, String traceId) {
+        // Atomic idempotency check — inside @Transactional
+        Optional<EventRecord> existing = eventRepository.findById(request.eventId());
+        if (existing.isPresent()) {
+            log.info("Duplicate event (atomic check): {} (status: {})", request.eventId(), existing.get().getStatus());
+            return TransactionResponse.success(
+                request.eventId(), request.accountId(), BigDecimal.ZERO, request.currency());
+        }
+
         // Save event as RECEIVED
         EventRecord event = new EventRecord();
         event.setEventId(request.eventId());

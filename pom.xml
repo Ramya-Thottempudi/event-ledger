@@ -29,6 +29,7 @@
         <spring-cloud.version>2025.1.2</spring-cloud.version>
         <resilience4j.version>2.4.0</resilience4j.version>
         <jacoco.argLine></jacoco.argLine>
+        <maven.test.skip>false</maven.test.skip>
     </properties>
 
     <dependencyManagement>
@@ -64,6 +65,35 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.15</version>
+                    <executions>
+                        <execution>
+                            <goals><goal>prepare-agent</goal></goals>
+                            <configuration>
+                                <propertyName>jacoco.argLine</propertyName>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>verify</phase>
+                            <goals><goal>report</goal></goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <argLine>@{jacoco.argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/sun.security.provider=ALL-UNNAMED</argLine>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -90,27 +120,6 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.15</version>
-                <executions>
-                    <execution>
-                        <goals><goal>prepare-agent</goal></goals>
-                        <configuration>
-                            <propertyName>jacoco.argLine</propertyName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>verify</phase>
-                        <goals><goal>report</goal></goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>@{jacoco.argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/sun.security.provider=ALL-UNNAMED</argLine>
-                </configuration>
             </plugin>
         </plugins>
     </build>
