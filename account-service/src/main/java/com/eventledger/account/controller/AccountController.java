@@ -43,13 +43,13 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}/balance")
-    public ResponseEntity<Map<String, Object>> getBalance(@PathVariable String accountId) {
+    public ResponseEntity<?> getBalance(@PathVariable String accountId) {
         try {
-            BigDecimal balance = accountService.getBalance(accountId);
+            AccountDetails details = accountService.getAccountDetails(accountId);
             return ResponseEntity.ok(Map.of(
-                "accountId", accountId,
-                "balance", balance,
-                "currency", "USD"
+                "accountId", details.accountId(),
+                "balance", details.balance(),
+                "currency", details.currency()
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
