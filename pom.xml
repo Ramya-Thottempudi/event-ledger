@@ -18,7 +18,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>4.1.0</version>
         <relativePath/>
     </parent>
 
@@ -26,11 +26,8 @@
         <java.version>26</java.version>
         <maven.compiler.release>26</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-cloud.version>2024.0.1</spring-cloud.version>
-        <resilience4j.version>2.2.0</resilience4j.version>
-        <opentelemetry.version>1.46.0</opentelemetry.version>
-        <micrometer-tracing.version>1.4.3</micrometer-tracing.version>
-        <logback-json.version>0.1.5</logback-json.version>
+        <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <resilience4j.version>2.4.0</resilience4j.version>
     </properties>
 
     <dependencyManagement>
@@ -43,23 +40,15 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-tracing-bridge-otel</artifactId>
-                <version>${micrometer-tracing.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-api</artifactId>
-                <version>${opentelemetry.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.github.resilience4j</groupId>
-                <artifactId>resilience4j-spring-boot3</artifactId>
+                <artifactId>resilience4j-bom</artifactId>
                 <version>${resilience4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>io.github.resilience4j</groupId>
-                <artifactId>resilience4j-circuitbreaker</artifactId>
+                <artifactId>resilience4j-spring-boot4</artifactId>
                 <version>${resilience4j.version}</version>
             </dependency>
         </dependencies>

@@ -4,8 +4,8 @@ import com.eventledger.gateway.client.AccountServiceClient;
 import com.eventledger.gateway.entity.EventRecord;
 import com.eventledger.gateway.repository.EventRepository;
 import com.eventledger.shared.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,8 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EventService {
@@ -60,7 +60,7 @@ public class EventService {
         if (request.metadata() != null && !request.metadata().isEmpty()) {
             try {
                 event.setMetadata(objectMapper.writeValueAsString(request.metadata()));
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 log.warn("Failed to serialize metadata", e);
             }
         }

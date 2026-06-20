@@ -5,8 +5,8 @@ import com.eventledger.account.entity.TransactionEntity;
 import com.eventledger.account.repository.AccountRepository;
 import com.eventledger.account.repository.TransactionRepository;
 import com.eventledger.shared.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -77,7 +77,7 @@ public class AccountService {
         if (request.metadata() != null && !request.metadata().isEmpty()) {
             try {
                 tx.setMetadata(objectMapper.writeValueAsString(request.metadata()));
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 log.warn("Failed to serialize metadata for event {}", request.eventId(), e);
             }
         }

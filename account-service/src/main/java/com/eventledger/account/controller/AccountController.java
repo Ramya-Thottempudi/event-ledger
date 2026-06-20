@@ -36,9 +36,9 @@ public class AccountController {
             TransactionResponse response = accountService.applyTransaction(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Failed to apply transaction: {}", e.getMessage(), e);
+            log.error("Failed to apply transaction for account {}: {}", accountId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(TransactionResponse.error(accountId, e.getMessage()));
+                .body(TransactionResponse.error(accountId, "An internal error occurred"));
         }
     }
 

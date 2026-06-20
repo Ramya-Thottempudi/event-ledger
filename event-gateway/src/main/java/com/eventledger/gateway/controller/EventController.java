@@ -54,10 +54,10 @@ public class EventController {
                 ? ResponseEntity.status(HttpStatus.OK).body(response)
                 : ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            log.error("Failed to process event: {}", e.getMessage(), e);
+            log.error("Failed to process event {}: {}", request.eventId(), e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
-                    "error", e.getMessage(),
+                    "error", "Event processing failed. Account Service may be unavailable.",
                     "traceId", traceId,
                     "eventId", request.eventId()
                 ));
@@ -70,8 +70,9 @@ public class EventController {
             EventRecord event = eventService.getEvent(eventId);
             return ResponseEntity.ok(event);
         } catch (Exception e) {
+            log.warn("Event not found: {}", eventId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
+                .body(Map.of("error", "Event not found: " + eventId));
         }
     }
 

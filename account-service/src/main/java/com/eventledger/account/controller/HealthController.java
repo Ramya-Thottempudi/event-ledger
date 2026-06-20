@@ -1,5 +1,7 @@
 package com.eventledger.account.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 @RestController
 public class HealthController {
+    private static final Logger log = LoggerFactory.getLogger(HealthController.class);
     private final DataSource dataSource;
     private final Instant startTime;
 
@@ -28,7 +31,8 @@ public class HealthController {
                 dbStatus = "DOWN";
             }
         } catch (Exception e) {
-            dbStatus = "DOWN: " + e.getMessage();
+            log.warn("Database health check failed", e);
+            dbStatus = "DOWN";
         }
 
         boolean isHealthy = dbStatus.equals("UP");
