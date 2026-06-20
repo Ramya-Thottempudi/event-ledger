@@ -3,6 +3,7 @@ package com.eventledger.gateway.config;
 import com.eventledger.shared.ValidationError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,6 +23,13 @@ public class GlobalExceptionHandler {
             .collect(Collectors.toList());
         return ResponseEntity.badRequest()
             .body(ValidationError.of("Validation failed", details));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ValidationError> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+            .body(ValidationError.of("Invalid request body", List.of("Could not parse request. Check field types and values.")));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
